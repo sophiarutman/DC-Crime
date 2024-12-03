@@ -68,6 +68,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="test1_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="test1_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -94,10 +123,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 ✖ dplyr::lag()    masks stats::lag()
 ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DescTools)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'DescTools' was built under R version 4.4.1</code></pre>
+</div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>adult <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../2013-2023/arrests_2013-2023.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>adult <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../2013-2023/arrests_2013-2023.csv"</span>) <span class="sc">|&gt;</span> <span class="fu">filter</span>(Arrest.Year <span class="sc">&gt;=</span> <span class="dv">2016</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
 e.g.:
@@ -114,11 +147,29 @@ dbl (13): Arrest.Year, Arrest.Hour, Age, Arrest.Location.PSA, Arrest.Locatio...
 ℹ Use `spec()` to retrieve the full column specification for this data.
 ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>adult<span class="sc">$</span>Arrest.Date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(adult<span class="sc">$</span>Arrest.Date, <span class="at">format =</span> <span class="st">"%Y-%m-%d"</span>)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>grouped_adult <span class="ot">&lt;-</span> adult <span class="sc">|&gt;</span> <span class="fu">group_by</span>(Arrest.Date) <span class="sc">|&gt;</span> <span class="fu">summarize</span>(<span class="at">count =</span> <span class="fu">n</span>())</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>grouped_adult <span class="ot">&lt;-</span> <span class="fu">head</span>(grouped_adult, <span class="sc">-</span><span class="dv">1</span>) </span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># last date has absurd amount of arrests, on the scale of 10^8</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(<span class="at">height=</span>grouped_adult<span class="sc">$</span>count, <span class="at">names.arg=</span>grouped_adult<span class="sc">$</span>Arrest.Date, <span class="at">main =</span> <span class="st">"Adult Arrests"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>adult<span class="sc">$</span>Arrest.Date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(adult<span class="sc">$</span>Arrest.Date, <span class="at">format =</span> <span class="st">"%Y-%m-%d"</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>grouped_adult <span class="ot">&lt;-</span> adult <span class="sc">|&gt;</span> <span class="fu">group_by</span>(Arrest.Date) <span class="sc">|&gt;</span> <span class="fu">summarize</span>(<span class="at">count =</span> <span class="fu">n</span>())</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>grouped_adult <span class="ot">&lt;-</span> <span class="fu">head</span>(grouped_adult, <span class="sc">-</span><span class="dv">1</span>) </span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>grouped_adult<span class="sc">$</span>count <span class="ot">&lt;-</span> grouped_adult<span class="sc">$</span>count <span class="sc">/</span> <span class="fu">sum</span>(grouped_adult<span class="sc">$</span>count)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>grouped_adult</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1,096 × 2
+   Arrest.Date    count
+   &lt;date&gt;         &lt;dbl&gt;
+ 1 2016-01-01  0.00134 
+ 2 2016-01-02  0.000990
+ 3 2016-01-03  0.000938
+ 4 2016-01-04  0.000769
+ 5 2016-01-05  0.00109 
+ 6 2016-01-06  0.000691
+ 7 2016-01-07  0.000990
+ 8 2016-01-08  0.00136 
+ 9 2016-01-09  0.00123 
+10 2016-01-10  0.00100 
+# ℹ 1,086 more rows</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># last date has absurd amount of arrests, on the scale of 10^8</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(<span class="at">height=</span>grouped_adult<span class="sc">$</span>count, <span class="at">names.arg=</span>grouped_adult<span class="sc">$</span>Arrest.Date, <span class="at">main =</span> <span class="st">"Adult Arrests"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -128,7 +179,7 @@ dbl (13): Arrest.Year, Arrest.Hour, Age, Arrest.Location.PSA, Arrest.Locatio...
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>juv <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../juvenile_arrest_data/all_juvenile_arrests.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>juv <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../juvenile_arrest_data/all_juvenile_arrests.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>New names:
 Rows: 15123 Columns: 5
@@ -139,10 +190,11 @@ Rows: 15123 Columns: 5
 Specify the column types or set `show_col_types = FALSE` to quiet this message.
 • `` -&gt; `...1`</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>juv<span class="sc">$</span>ARREST_DATE <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(juv<span class="sc">$</span>ARREST_DATE, <span class="at">format =</span> <span class="st">"%m/%d/%y"</span>)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>juv<span class="sc">$</span>Arrest.Year <span class="ot">&lt;-</span> <span class="fu">format</span>(juv<span class="sc">$</span>ARREST_DATE,<span class="st">"%y"</span>)</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>grouped_juv <span class="ot">&lt;-</span> juv <span class="sc">|&gt;</span> <span class="fu">group_by</span>(ARREST_DATE) <span class="sc">|&gt;</span> <span class="fu">summarize</span>(<span class="at">count =</span> <span class="fu">n</span>())</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(<span class="at">height=</span>grouped_juv<span class="sc">$</span>count, <span class="at">names.arg=</span>grouped_juv<span class="sc">$</span>ARREST_DATE, <span class="at">main =</span> <span class="st">"Juvenile Arrests"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>juv<span class="sc">$</span>ARREST_DATE <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(juv<span class="sc">$</span>ARREST_DATE, <span class="at">format =</span> <span class="st">"%m/%d/%y"</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>juv<span class="sc">$</span>Arrest.Year <span class="ot">&lt;-</span> <span class="fu">format</span>(juv<span class="sc">$</span>ARREST_DATE,<span class="st">"%y"</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>grouped_juv <span class="ot">&lt;-</span> juv <span class="sc">|&gt;</span> <span class="fu">group_by</span>(ARREST_DATE) <span class="sc">|&gt;</span> <span class="fu">summarize</span>(<span class="at">count =</span> <span class="fu">n</span>())</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>grouped_juv<span class="sc">$</span>count <span class="ot">&lt;-</span> grouped_juv<span class="sc">$</span>count <span class="sc">/</span> <span class="fu">sum</span>(grouped_juv<span class="sc">$</span>count)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(<span class="at">height=</span>grouped_juv<span class="sc">$</span>count, <span class="at">names.arg=</span>grouped_juv<span class="sc">$</span>ARREST_DATE, <span class="at">main =</span> <span class="st">"Juvenile Arrests"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -152,7 +204,7 @@ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ks.test</span>(grouped_adult<span class="sc">$</span>count, grouped_juv<span class="sc">$</span>count)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ks.test</span>(grouped_adult<span class="sc">$</span>count, grouped_juv<span class="sc">$</span>count)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning in ks.test.default(grouped_adult$count, grouped_juv$count): p-value
 will be approximate in the presence of ties</code></pre>
@@ -162,16 +214,46 @@ will be approximate in the presence of ties</code></pre>
     Asymptotic two-sample Kolmogorov-Smirnov test
 
 data:  grouped_adult$count and grouped_juv$count
-D = 0.99424, p-value &lt; 2.2e-16
+D = 0.59376, p-value &lt; 2.2e-16
 alternative hypothesis: two-sided</code></pre>
 </div>
 </div>
+<p>grouped.adult &lt;- adult |&gt; group_by(Arrest.Category) |&gt; summarize(count = n()) |&gt; arrange(desc(count)) grouped.adult<span class="math inline">\(count &lt;- grouped.adult\)</span>count / sum(grouped.adult$count) sliced &lt;- grouped.adult |&gt; slice(0:20)</p>
+<p>par(mar = c(30, 4, 4, 4)) barplot(height = sliced<span class="math inline">\(count, names.arg = sliced\)</span>Arrest.Category, las = 2, main = “Adult Arrests”)</p>
+<p>grouped.juv &lt;- juv |&gt; group_by(TOP_CHARGE_DESCRIPTION) |&gt; summarize(count = n()) |&gt; arrange(desc(count)) grouped.juv<span class="math inline">\(count &lt;- grouped.juv\)</span>count / sum(grouped.juv$count) sliced &lt;- grouped.juv |&gt; slice(0:20)</p>
+<p>#barplot(height = sliced<span class="math inline">\(count, names.arg = sliced\)</span>TOP_CHARGE_DESCRIPTION, las = 2, main = “Juvenile Arrests”)</p>
+<p>names(grouped.juv) &lt;- c(“Arrest.Category”, “count.juv”) combined &lt;- full_join(grouped.adult, grouped.juv, by = “Arrest.Category”)</p>
+<p>combined<span class="math inline">\(count.juv &lt;- as.numeric(combined\)</span>count.juv) combined<span class="math inline">\(count &lt;- as.numeric(combined\)</span>count) combined<span class="math inline">\(count.juv[is.na(combined\)</span>count.juv)] &lt;- 0 combined<span class="math inline">\(count[is.na(combined\)</span>count)] &lt;- 0 combined &lt;- data.frame(Adult = combined<span class="math inline">\(count, Juv = combined\)</span>count.juv) combined &lt;- table(combined<span class="math inline">\(Adult, combined\)</span>Juv)</p>
+<section id="perform-g-test-like-chi-squared-test-but-for-small-counts" class="level1">
+<h1>Perform G-test (like chi-squared test but for small counts)</h1>
+<p>GTest(combined)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>grouped.adult <span class="ot">&lt;-</span> adult <span class="sc">|&gt;</span> <span class="fu">group_by</span>(Arrest.Category) <span class="sc">|&gt;</span> <span class="fu">summarize</span>(<span class="at">count =</span> <span class="fu">n</span>()) <span class="sc">|&gt;</span> <span class="fu">arrange</span>(Arrest.Category)</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>sliced <span class="ot">&lt;-</span> grouped.adult <span class="sc">|&gt;</span> <span class="fu">slice</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">10</span>)</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">12</span>, <span class="dv">4</span>, <span class="dv">0</span>, <span class="dv">4</span>))</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(<span class="at">height =</span> sliced<span class="sc">$</span>count, <span class="at">names.arg =</span> sliced<span class="sc">$</span>Arrest.Category, <span class="at">las =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>grouped.adult <span class="ot">&lt;-</span> adult <span class="sc">|&gt;</span> <span class="fu">group_by</span>(Arrest.Location.PSA) <span class="sc">|&gt;</span> <span class="fu">summarise</span>(<span class="at">count =</span> <span class="fu">n</span>())</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>grouped.adult<span class="sc">$</span>count <span class="ot">&lt;-</span> grouped.adult<span class="sc">$</span>count <span class="sc">/</span> <span class="fu">sum</span>(grouped.adult<span class="sc">$</span>count)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>grouped.adult<span class="sc">$</span>count[<span class="fu">is.na</span>(grouped.adult<span class="sc">$</span>count)] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>grouped.juv <span class="ot">&lt;-</span> juv <span class="sc">|&gt;</span> <span class="fu">group_by</span>(CRIME_PSA) <span class="sc">|&gt;</span> <span class="fu">summarise</span>(<span class="at">count =</span> <span class="fu">n</span>())</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>grouped.juv<span class="sc">$</span>count <span class="ot">&lt;-</span> grouped.juv<span class="sc">$</span>count <span class="sc">/</span> <span class="fu">sum</span>(grouped.juv<span class="sc">$</span>count)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>grouped.juv<span class="sc">$</span>CRIME_PSA <span class="ot">&lt;-</span> <span class="fu">as.double</span>(grouped.juv<span class="sc">$</span>CRIME_PSA)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: NAs introduced by coercion</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>grouped.juv<span class="sc">$</span>count[<span class="fu">is.na</span>(grouped.juv<span class="sc">$</span>count)] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(grouped.juv) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Arrest.Location.PSA"</span>, <span class="st">"count.juv"</span>)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(grouped.juv)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Arrest.Location.PSA" "count.juv"          </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(grouped.adult)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Arrest.Location.PSA" "count"              </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>combined <span class="ot">&lt;-</span> <span class="fu">full_join</span>(grouped.adult, grouped.juv, <span class="at">by =</span> <span class="st">"Arrest.Location.PSA"</span>)</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>combined <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Adult =</span> combined<span class="sc">$</span>count, <span class="at">Juv =</span> combined<span class="sc">$</span>count.juv)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>combined <span class="ot">&lt;-</span> <span class="fu">table</span>(combined<span class="sc">$</span>Adult, combined<span class="sc">$</span>Juv)</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(<span class="at">height =</span> grouped.adult<span class="sc">$</span>count, <span class="at">las =</span> <span class="dv">2</span>, <span class="at">main =</span> <span class="st">"Adult Arrests"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -179,9 +261,7 @@ alternative hypothesis: two-sided</code></pre>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>grouped.juv <span class="ot">&lt;-</span> juv <span class="sc">|&gt;</span> <span class="fu">group_by</span>(TOP_CHARGE_DESCRIPTION) <span class="sc">|&gt;</span> <span class="fu">summarize</span>(<span class="at">count =</span> <span class="fu">n</span>()) <span class="sc">|&gt;</span> <span class="fu">arrange</span>(TOP_CHARGE_DESCRIPTION)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>sliced <span class="ot">&lt;-</span> grouped.juv <span class="sc">|&gt;</span> <span class="fu">slice</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">10</span>)</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(<span class="at">height =</span> sliced<span class="sc">$</span>count, <span class="at">names.arg =</span> sliced<span class="sc">$</span>TOP_CHARGE_DESCRIPTION, <span class="at">las =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(<span class="at">height =</span> grouped.juv<span class="sc">$</span>count.juv, <span class="at">main =</span> <span class="st">"Juvenile Arrests"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -189,25 +269,16 @@ alternative hypothesis: two-sided</code></pre>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(grouped.juv) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Arrest.Category"</span>, <span class="st">"count.juv"</span>)</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>combined <span class="ot">&lt;-</span> <span class="fu">full_join</span>(grouped.adult, grouped.juv, <span class="at">by =</span> <span class="st">"Arrest.Category"</span>)</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>combined<span class="sc">$</span>count.juv <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(combined<span class="sc">$</span>count.juv)</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>combined<span class="sc">$</span>count <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(combined<span class="sc">$</span>count)</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>combined<span class="sc">$</span>count.juv[<span class="fu">is.na</span>(combined<span class="sc">$</span>count.juv)] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>combined<span class="sc">$</span>count[<span class="fu">is.na</span>(combined<span class="sc">$</span>count)] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>combined <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Adult =</span> combined<span class="sc">$</span>count, <span class="at">Juv =</span> combined<span class="sc">$</span>count.juv)</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(combined)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning in chisq.test(combined): Chi-squared approximation may be incorrect</code></pre>
-</div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">GTest</span>(combined)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-    Pearson's Chi-squared test
+    Log likelihood ratio (G-test) test of independence without correction
 
 data:  combined
-X-squared = 220943, df = 300, p-value &lt; 2.2e-16</code></pre>
+G = 491.23, X-squared df = 3306, p-value = 1</code></pre>
 </div>
 </div>
+</section>
 
 </main>
 <!-- /main column -->
