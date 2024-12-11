@@ -1,0 +1,130 @@
+
+
+```{r}
+#pacakges that we need
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+#reads in the data 
+arrest <- read.csv("arrests_2013-2023.csv")
+colnames(arrest)
+```
+
+```{r}
+#added 
+#filters the arrest to get rid of certain things like NA 
+filtered_arrest <- arrest %>%
+  filter(!Offense.District %in% c("#N/A", "UNKNOWN", "Unk"),
+         !Arrest.Category %in% c("#N/A", "UNKNOWN", "Unk"))
+```
+
+```{r}
+#this breaks down the arrest counts by crime category to help plot the data 
+plot_data <- filtered_arrest %>%
+  count(Offense.District, Arrest.Category, name = "crime_count") %>%
+  filter(Offense.District != "<NA>") %>%
+  group_by(Offense.District) %>%
+  slice_max(crime_count, n = 8, with_ties = FALSE) %>%
+  ungroup()
+
+plot_data
+
+```
+
+```{r}
+#this creates the stacked bar plot using the plot_data information 
+ggplot(plot_data, aes(x = Offense.District, y = crime_count, fill = Arrest.Category)) + 
+  geom_bar(stat = "identity") +
+  theme() +
+  ggtitle("Arrest count by District and Category") +
+  labs(
+    x = "District",             # Label for x-axis
+    y = "Arrest Count" ,
+    fill = "Crime Category"          # Label for y-axis
+  ) +
+  theme(
+    axis.text.x = element_text(size = 15),  # Increase x-axis text size
+    axis.text.y = element_text(size = 15),
+    legend.text = element_text(size = 15),             # Adjust legend text size
+    legend.title = element_text(size = 18),
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(size = 20),
+    plot.title = element_text(size = 25),
+    plot.margin = margin(10, 10, 10, 50)     # Increase y-axis text size
+  )
+  ggsave("plot.png", plot = last_plot(), width = 14, height = 8)
+```
+
+
+```{r}
+#this runs our chi squared test 
+#compare arrest catergory and distrcit 
+#null: arrest cat is indep with cat 
+#alt: arrest cat is dep cat 
+crime_table <- table(filtered_arrest$Offense.District, filtered_arrest$Arrest.Category)
+chi_test_result <- chisq.test(table(filtered_arrest$Offense.District, filtered_arrest$Arrest.Category))
+print(chi_test_result)
+#this is to see our residuals, to understand which crimes are district specific 
+chi_test_result$residuals
+```
+
+
+```{r}
+#this cleans up the districts to perform the anova test and plot 
+library(dplyr)
+#group the columns 
+arrest1 <- arrest %>%
+  filter(Offense.District != "", Offense.District != "Unk") %>%  # Filter out unwanted districts
+  group_by(Arrest.Year, Offense.District) %>%  # Group by Year and District
+  summarise(crime_count = n(), .groups = "drop") %>%
+  filter(Offense.District != "#N/A") %>%
+  filter(Offense.District != "UNKNOWN")# Count crimes and drop grouping structure after summarizing
+print(arrest1$Offense.District)
+table(arrest1$Arrest.Year)
+#str(arrest)
+#removed column where district wasn't known about 188 
+```
+
+```{r}
+#this produces the plot for the bar plot of arrest counts in Districts using the arrest1, filtered data 
+library(ggplot2)
+
+ggplot(arrest1, aes(x = Offense.District, y = crime_count, fill = Offense.District)) + 
+  geom_bar(stat = "identity") +
+  scale_fill_brewer(palette = "Set1") + 
+  theme(legend.position = "none") +
+  ggtitle("Bar plot of Arrest Count in Districts") +
+  labs(
+    x = "District",             # Label for x-axis
+    y = "Arrest Count"           # Label for y-axis
+  ) +
+  theme(
+    axis.text.x = element_text(size = 17),  # Increase x-axis text size
+    axis.text.y = element_text(size = 17) ,
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(size = 20),
+    plot.title = element_text(size = 25)  # Increase y-axis text size
+  )
+
+```
+
+```{r}
+#this performs the anova table  
+crime_aov <- aov(crime_count ~ Offense.District, data = arrest1)
+# View the ANOVA table
+summary(crime_aov)
+```
+
+
+```{r}
+#this performs the tukey's test and plots the results 
+result <- aov(crime_count ~ Offense.District, data = arrest1)
+summary(result)
+
+TukeyHSD(result)
+
+plot(TukeyHSD(result))
+```
+
