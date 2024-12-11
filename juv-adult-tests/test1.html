@@ -204,7 +204,27 @@ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ks.test</span>(grouped_adult<span class="sc">$</span>count, grouped_juv<span class="sc">$</span>count)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>grouped_juv <span class="ot">&lt;-</span> juv <span class="sc">|&gt;</span> <span class="fu">group_by</span>(ARREST_DATE) <span class="sc">|&gt;</span> <span class="fu">summarize</span>(<span class="at">count =</span> <span class="fu">n</span>()) <span class="sc">|&gt;</span> <span class="fu">arrange</span>(<span class="fu">desc</span>(count))</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>grouped_juv</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2,286 × 2
+   ARREST_DATE count
+   &lt;date&gt;      &lt;int&gt;
+ 1 2023-07-28     61
+ 2 2022-02-10     41
+ 3 2023-06-16     35
+ 4 2023-04-23     32
+ 5 2023-08-11     32
+ 6 2023-08-25     29
+ 7 2016-10-27     27
+ 8 2023-09-14     27
+ 9 2018-11-06     26
+10 2016-08-30     25
+# ℹ 2,276 more rows</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ks.test</span>(grouped_adult<span class="sc">$</span>count, grouped_juv<span class="sc">$</span>count)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning in ks.test.default(grouped_adult$count, grouped_juv$count): p-value
 will be approximate in the presence of ties</code></pre>
@@ -214,71 +234,191 @@ will be approximate in the presence of ties</code></pre>
     Asymptotic two-sample Kolmogorov-Smirnov test
 
 data:  grouped_adult$count and grouped_juv$count
-D = 0.59376, p-value &lt; 2.2e-16
+D = 1, p-value &lt; 2.2e-16
 alternative hypothesis: two-sided</code></pre>
 </div>
 </div>
-<p>grouped.adult &lt;- adult |&gt; group_by(Arrest.Category) |&gt; summarize(count = n()) |&gt; arrange(desc(count)) grouped.adult<span class="math inline">\(count &lt;- grouped.adult\)</span>count / sum(grouped.adult$count) sliced &lt;- grouped.adult |&gt; slice(0:20)</p>
+<p>grouped.adult.unscaled &lt;- adult |&gt; group_by(Arrest.Category) |&gt; summarize(count = n()) |&gt; arrange(desc(count)) grouped.adult<span class="math inline">\(count &lt;- grouped.adult.unscaled\)</span>count / sum(grouped.adult.unscaled$count) sliced &lt;- grouped.adult |&gt; slice(0:20)</p>
 <p>par(mar = c(30, 4, 4, 4)) barplot(height = sliced<span class="math inline">\(count, names.arg = sliced\)</span>Arrest.Category, las = 2, main = “Adult Arrests”)</p>
-<p>grouped.juv &lt;- juv |&gt; group_by(TOP_CHARGE_DESCRIPTION) |&gt; summarize(count = n()) |&gt; arrange(desc(count)) grouped.juv<span class="math inline">\(count &lt;- grouped.juv\)</span>count / sum(grouped.juv$count) sliced &lt;- grouped.juv |&gt; slice(0:20)</p>
-<p>#barplot(height = sliced<span class="math inline">\(count, names.arg = sliced\)</span>TOP_CHARGE_DESCRIPTION, las = 2, main = “Juvenile Arrests”)</p>
-<p>names(grouped.juv) &lt;- c(“Arrest.Category”, “count.juv”) combined &lt;- full_join(grouped.adult, grouped.juv, by = “Arrest.Category”)</p>
-<p>combined<span class="math inline">\(count.juv &lt;- as.numeric(combined\)</span>count.juv) combined<span class="math inline">\(count &lt;- as.numeric(combined\)</span>count) combined<span class="math inline">\(count.juv[is.na(combined\)</span>count.juv)] &lt;- 0 combined<span class="math inline">\(count[is.na(combined\)</span>count)] &lt;- 0 combined &lt;- data.frame(Adult = combined<span class="math inline">\(count, Juv = combined\)</span>count.juv) combined &lt;- table(combined<span class="math inline">\(Adult, combined\)</span>Juv)</p>
-<section id="perform-g-test-like-chi-squared-test-but-for-small-counts" class="level1">
-<h1>Perform G-test (like chi-squared test but for small counts)</h1>
-<p>GTest(combined)</p>
+<p>grouped.juv.unscaled &lt;- juv |&gt; group_by(TOP_CHARGE_DESCRIPTION) |&gt; summarize(count = n()) |&gt; arrange(desc(count)) grouped.juv<span class="math inline">\(count &lt;- grouped.juv.unscaled\)</span>count / sum(grouped.juv.unscaled<span class="math inline">\(count)
+sliced &lt;- grouped.juv |&gt; slice(0:20)
+#barplot(height = sliced\)</span>count, names.arg = sliced$TOP_CHARGE_DESCRIPTION, las = 2, main = “Juvenile Arrests”)</p>
+<p>names(grouped.juv) &lt;- c(“Arrest.Category”, “count.juv”) names(grouped.juv.unscaled) &lt;- c(“Arrest.Category”, “count.juv”)</p>
+<p>combined &lt;- full_join(grouped.adult.unscaled, grouped.juv.unscaled, by = “Arrest.Category”)</p>
+<p>combined<span class="math inline">\(count.juv &lt;- as.numeric(combined\)</span>count.juv) combined<span class="math inline">\(count &lt;- as.numeric(combined\)</span>count) combined<span class="math inline">\(count.juv[is.na(combined\)</span>count.juv)] &lt;- 0 combined<span class="math inline">\(count[is.na(combined\)</span>count)] &lt;- 0 combined &lt;- data.frame(Adult = combined<span class="math inline">\(count, Juv = combined\)</span>count.juv) combined GTest(combined)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>grouped.adult <span class="ot">&lt;-</span> adult <span class="sc">|&gt;</span> <span class="fu">group_by</span>(Arrest.Location.PSA) <span class="sc">|&gt;</span> <span class="fu">summarise</span>(<span class="at">count =</span> <span class="fu">n</span>())</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>grouped.adult<span class="sc">$</span>count <span class="ot">&lt;-</span> grouped.adult<span class="sc">$</span>count <span class="sc">/</span> <span class="fu">sum</span>(grouped.adult<span class="sc">$</span>count)</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>grouped.adult<span class="sc">$</span>count[<span class="fu">is.na</span>(grouped.adult<span class="sc">$</span>count)] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>grouped.juv <span class="ot">&lt;-</span> juv <span class="sc">|&gt;</span> <span class="fu">group_by</span>(CRIME_PSA) <span class="sc">|&gt;</span> <span class="fu">summarise</span>(<span class="at">count =</span> <span class="fu">n</span>())</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>grouped.juv<span class="sc">$</span>count <span class="ot">&lt;-</span> grouped.juv<span class="sc">$</span>count <span class="sc">/</span> <span class="fu">sum</span>(grouped.juv<span class="sc">$</span>count)</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>grouped.juv<span class="sc">$</span>CRIME_PSA <span class="ot">&lt;-</span> <span class="fu">as.double</span>(grouped.juv<span class="sc">$</span>CRIME_PSA)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>grouped.adult <span class="ot">&lt;-</span> adult <span class="sc">|&gt;</span> <span class="fu">group_by</span>(Arrest.Location.PSA) <span class="sc">|&gt;</span> <span class="fu">summarise</span>(<span class="at">count =</span> <span class="fu">n</span>())</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>grouped.adult<span class="sc">$</span>count <span class="ot">&lt;-</span> grouped.adult<span class="sc">$</span>count <span class="sc">/</span> <span class="fu">sum</span>(grouped.adult<span class="sc">$</span>count)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>grouped.adult<span class="sc">$</span>count[<span class="fu">is.na</span>(grouped.adult<span class="sc">$</span>count)] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>grouped_adult <span class="ot">&lt;-</span> grouped.adult[<span class="sc">!</span><span class="fu">is.na</span>(grouped.adult<span class="sc">$</span>Arrest.Location.PSA),]</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>grouped.juv <span class="ot">&lt;-</span> juv <span class="sc">|&gt;</span> <span class="fu">group_by</span>(CRIME_PSA) <span class="sc">|&gt;</span> <span class="fu">summarise</span>(<span class="at">count =</span> <span class="fu">n</span>()) <span class="sc">|&gt;</span> <span class="fu">arrange</span>(count)</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="co">#grouped.juv$count &lt;- grouped.juv$count / sum(grouped.juv$count)</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>grouped.juv<span class="sc">$</span>CRIME_PSA <span class="ot">&lt;-</span> <span class="fu">as.double</span>(grouped.juv<span class="sc">$</span>CRIME_PSA)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning: NAs introduced by coercion</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>grouped.juv<span class="sc">$</span>count[<span class="fu">is.na</span>(grouped.juv<span class="sc">$</span>count)] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(grouped.juv) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Arrest.Location.PSA"</span>, <span class="st">"count.juv"</span>)</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(grouped.juv)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "Arrest.Location.PSA" "count.juv"          </code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(grouped.adult)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "Arrest.Location.PSA" "count"              </code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>combined <span class="ot">&lt;-</span> <span class="fu">full_join</span>(grouped.adult, grouped.juv, <span class="at">by =</span> <span class="st">"Arrest.Location.PSA"</span>)</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>combined <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Adult =</span> combined<span class="sc">$</span>count, <span class="at">Juv =</span> combined<span class="sc">$</span>count.juv)</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>combined <span class="ot">&lt;-</span> <span class="fu">table</span>(combined<span class="sc">$</span>Adult, combined<span class="sc">$</span>Juv)</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(<span class="at">height =</span> grouped.adult<span class="sc">$</span>count, <span class="at">las =</span> <span class="dv">2</span>, <span class="at">main =</span> <span class="st">"Adult Arrests"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>grouped.juv<span class="sc">$</span>count[<span class="fu">is.na</span>(grouped.juv<span class="sc">$</span>count)] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(grouped.juv) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Arrest.Location.PSA"</span>, <span class="st">"count.juv"</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>grouped.juv <span class="ot">&lt;-</span> grouped.juv[<span class="sc">!</span><span class="fu">is.na</span>(grouped.juv<span class="sc">$</span>Arrest.Location.PSA),]</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>combined <span class="ot">&lt;-</span> <span class="fu">full_join</span>(grouped.adult, grouped.juv, <span class="at">by =</span> <span class="st">"Arrest.Location.PSA"</span>)</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>combined <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Adult =</span> combined<span class="sc">$</span>count, <span class="at">Juv =</span> combined<span class="sc">$</span>count.juv)</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">cex.axis =</span> <span class="fl">1.5</span>)</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(<span class="at">height =</span> grouped.adult<span class="sc">$</span>count, <span class="at">names.arg =</span> grouped.adult<span class="sc">$</span>Arrest.Location.PSA, <span class="at">las =</span> <span class="dv">2</span>, <span class="at">main =</span> <span class="st">"Adult Arrests"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="test1_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="test1_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(<span class="at">height =</span> grouped.juv<span class="sc">$</span>count.juv, <span class="at">main =</span> <span class="st">"Juvenile Arrests"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="test1_files/figure-html/unnamed-chunk-5-2.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">GTest</span>(combined)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># barplot(height = grouped.juv$count.juv, names.arg=grouped.juv$Arrest.Location.PSA, las = 2, main = "Juvenile Arrests")</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ks.test</span>(combined<span class="sc">$</span>Adult, combined<span class="sc">$</span>Juv)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-    Log likelihood ratio (G-test) test of independence without correction
+    Exact two-sample Kolmogorov-Smirnov test
 
-data:  combined
-G = 491.23, X-squared df = 3306, p-value = 1</code></pre>
+data:  combined$Adult and combined$Juv
+D = 1, p-value &lt; 2.2e-16
+alternative hypothesis: two-sided</code></pre>
 </div>
 </div>
-</section>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>grouped_juv <span class="ot">&lt;-</span> juv <span class="sc">|&gt;</span> <span class="fu">group_by</span>(ARREST_DATE) <span class="sc">|&gt;</span> <span class="fu">summarize</span>(<span class="at">count =</span> <span class="fu">n</span>())</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>arrests_ts_juv <span class="ot">&lt;-</span> <span class="fu">ts</span>(grouped_juv<span class="sc">$</span>count, </span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">start =</span> <span class="fu">c</span>(<span class="dv">2016</span>, <span class="dv">1</span>), </span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">frequency =</span> <span class="dv">365</span>)  <span class="co"># Monthly data</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Decompose the time series</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>decomposed_ts_juv <span class="ot">&lt;-</span> <span class="fu">decompose</span>(arrests_ts_juv)</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot decomposition</span></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(decomposed_ts_juv, <span class="at">title =</span> <span class="st">"Decomposition of Juvenile Additive Time Series"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in plot.window(...): "title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in plot.xy(xy, type, ...): "title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in title(...): "title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in plot.xy(xy.coords(x, y), type = type, ...): "title" is not a
+graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in box(...): "title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in axis(y.side, xpd = NA, cex.axis = cex.axis, col.axis = col.axis, :
+"title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in mtext(nm[i], y.side, line = 3, cex = cex.lab, col = col.lab, :
+"title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in plot.window(...): "title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in plot.xy(xy, type, ...): "title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in title(...): "title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in plot.xy(xy.coords(x, y), type = type, ...): "title" is not a
+graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in box(...): "title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in axis(y.side, xpd = NA, cex.axis = cex.axis, col.axis = col.axis, :
+"title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in mtext(nm[i], y.side, line = 3, cex = cex.lab, col = col.lab, :
+"title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in plot.window(...): "title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in plot.xy(xy, type, ...): "title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in title(...): "title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in plot.xy(xy.coords(x, y), type = type, ...): "title" is not a
+graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in box(...): "title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in axis(y.side, xpd = NA, cex.axis = cex.axis, col.axis = col.axis, :
+"title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in mtext(nm[i], y.side, line = 3, cex = cex.lab, col = col.lab, :
+"title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in plot.window(...): "title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in plot.xy(xy, type, ...): "title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in title(...): "title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in plot.xy(xy.coords(x, y), type = type, ...): "title" is not a
+graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in box(...): "title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in axis(y.side, xpd = NA, cex.axis = cex.axis, col.axis = col.axis, :
+"title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in axis(1, xpd = NA, cex.axis = cex.axis, col.axis = col.axis,
+font.axis = font.axis, : "title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in mtext(nm[i], y.side, line = 3, cex = cex.lab, col = col.lab, :
+"title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in mtext(xlab, side = 1, line = 3, cex = cex.lab, col = col.lab, :
+"title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in mtext(main, side = 3, line = 3, cex = cex.main, font = font.main, :
+"title" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="test1_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
 
 </main>
 <!-- /main column -->
