@@ -1,0 +1,314 @@
+---
+title: "Time Series and Arrest Categorization"
+author: "Trey Roark"
+date: "2024-12-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This file contains all the code related to the Time Series and Arrest Categorization analysis in my group's 5100 Final Project covering Arrest Rates in the DMV area. Acknowledgements to my teammates and Dr. Purna for her guidance and instruction. 
+
+```{r, warning=FALSE}
+# Load Libraries & Data
+suppressMessages(library(readr))
+suppressMessages(library(readxl))
+suppressMessages(library(dplyr))
+suppressMessages(library(ggplot2))
+suppressMessages(library(lubridate))
+suppressMessages(library(forecast))
+suppressMessages(library(Kendall))
+suppressMessages(library(tidyverse))
+suppressMessages(library(tsibble))
+suppressMessages(library(fabletools))
+suppressMessages(library(fable))
+suppressMessages(library(feasts))
+suppressMessages(library(tseries))
+
+# Load combined data (shout out Lizzie)
+suppressMessages(combined_data <- read_csv("arrests_2013-2023.csv"))
+
+# Change Column Data Types
+## Convert the `Arrest Date` column to a Date format
+combined_data <- combined_data |>
+  mutate(
+    # Identify the year to determine format
+    Year = substr(Arrest.Date, 1, 4),
+    
+    # Apply conditional parsing
+    Arrest.Date = case_when(
+      Year %in% c("2013", "2014", "2015", "2016", "2017", "2023") ~ ymd(Arrest.Date),
+      TRUE ~ mdy(Arrest.Date)
+    )
+  )
+
+# Check for remaining NAs
+anyNA(combined_data$Arrest.Date)
+
+
+## Defendant PSA code
+combined_data <- combined_data |>
+  mutate(`Defendant.PSA` = as.character(`Defendant.PSA`))
+
+## Defendant District
+combined_data <- combined_data |>
+  mutate(`Defendant.District` = as.character(`Defendant.District`))
+
+## Arrest Location PSA
+combined_data <- combined_data |>
+  mutate(`Arrest.Location.PSA` = as.character(`Arrest.Location.PSA`))
+
+## Arrest Location District
+combined_data <- combined_data |>
+  mutate(`Arrest.Location.District` = as.character(`Arrest.Location.District`))
+
+## Arrest Block GOEX & GEOY
+combined_data <- combined_data |>
+  mutate(`Arrest.Block.GEOX` = as.numeric(`Arrest.Block.GEOX`))
+
+combined_data <- combined_data |>
+  mutate(`Arrest.Block.GEOY` = as.numeric(`Arrest.Block.GEOY`))
+
+## Arrest Longitude and Latitude
+combined_data <- combined_data |>
+  mutate(`Arrest.Latitude` = as.numeric(`Arrest.Latitude`))
+
+combined_data <- combined_data |>
+  mutate(`Arrest.Longitude` = as.numeric(`Arrest.Longitude`))
+
+## Offense Location PSA
+combined_data <- combined_data |>
+  mutate(`Offense.PSA` = as.character(`Offense.PSA`)) 
+```
+
+
+# Time Series
+
+## EDA
+
+```{r}
+# Aggregate data by date
+arrest_ts_data <- combined_data |>
+  mutate(Arrest.Date = as.Date(Arrest.Date)) |>
+  count(Arrest.Date) |>
+  rename(Date = Arrest.Date, Arrests = n)
+
+# Convert to tsibble for modeling
+arrest_ts <- arrest_ts_data |>
+  as_tsibble(index = Date)
+
+# Plot the time series
+ggplot(arrest_ts, aes(x = Date, y = Arrests)) +
+  geom_line() +
+  labs(title = "Time Series of Daily Arrests", x = "Date", y = "Number of Arrests") + theme_minimal()
+
+```
+
+```{r}
+# Create a time series object
+arrests_ts <- ts(arrest_ts_data$Arrests, 
+                 start = c(2013, 1), 
+                 frequency = 365)  # Daily data
+# Decompose the time series
+decomposed_ts <- decompose(arrests_ts)
+
+# Plot decomposition
+plot(decomposed_ts)
+```
+
+```{r}
+# Filter for dates with arrests greater than 200
+high_arrest_dates <- arrest_ts_data[arrest_ts_data$Arrests > 250, ]
+
+# Display the result
+print(high_arrest_dates)
+```
+
+## COVID Significance Test
+
+```{r}
+# Rename Column name for consistency and merging
+colnames(arrest_ts_data)[1] <- "Arrest.Date"
+```
+
+```{r}
+# Define the COVID split date
+covid_date <- as.Date("2020-03-11")
+
+combined_data_merged <- combined_data |>
+  left_join(arrest_ts_data, by = "Arrest.Date")
+
+# Split into pre-COVID and post-COVID
+pre_covid <- combined_data_merged |>
+  filter(Arrest.Date < covid_date)
+
+post_covid <- combined_data_merged |>
+  filter(Arrest.Date >= covid_date)
+```
+
+```{r}
+ggplot(combined_data_merged, aes(x = factor(Arrest.Date >= covid_date, labels = c("Pre-COVID", "Post-COVID")), y = Arrests)) +
+  geom_boxplot(fill = c("lightblue", "pink")) +
+  labs(title = "Comparison of Arrests Pre- and Post-COVID", x = "Period", y = "Arrests") +
+  theme_minimal()
+```
+
+```{r}
+# Perform t-test
+t_test <- t.test(pre_covid$Arrests, post_covid$Arrests, alternative = "two.sided", var.equal = FALSE)
+
+# Print the results
+print(t_test)
+
+```
+
+
+# Arrest Categorization
+
+## EDA
+
+```{r}
+# Aggregate monthly arrest counts
+monthly_arrests <- combined_data |>
+  mutate(YearMonth = floor_date(`Arrest.Date`, "month")) |>
+  group_by(YearMonth) |>
+  summarise(Arrests = n())
+
+# View the first few rows
+head(monthly_arrests)
+```
+
+```{r}
+table(combined_data$Arrest.Category)
+```
+
+
+```{r}
+# Aggregate arrests by month and category
+time_series_data <- combined_data |>
+  mutate(YearMonth = floor_date(`Arrest.Date`, "month")) |>
+  group_by(YearMonth, `Arrest.Category`) |>
+  summarise(Count = n(), .groups = "drop")
+```
+
+```{r}
+# Group by Arrest Category and calculate counts
+arrest_category_counts <- combined_data |>
+  group_by(`Arrest.Category`) |>
+  summarise(Count = n()) |>
+  arrange(desc(Count))
+
+# Plot time series for top 5 arrest categories
+top_categories <- arrest_category_counts |>
+  slice(1:8) |>
+  pull(`Arrest.Category`)
+
+time_series_top <- time_series_data |>
+  filter(`Arrest.Category` %in% top_categories)
+
+ggplot(drop_na(time_series_top), aes(x = YearMonth, y = Count, color = `Arrest.Category`)) +
+  geom_line() +
+  labs(
+    title = "Monthly Arrest Counts per Category",
+    x = "Year-Month",
+    y = "Monthly Arrest Count",
+    color = "Arrest Category"
+  ) +
+  theme_classic()
+
+```
+
+```{r}
+# Group by Arrest Category and calculate counts
+arrest_category_counts <- combined_data |>
+  group_by(`Arrest.Category`) |>
+  summarise(Count = n()) |>
+  arrange(desc(Count))
+
+# View the counts
+head(arrest_category_counts)
+```
+
+```{r}
+# Ensure Date column is properly formatted and create YearMonth
+data_subset <- combined_data_merged |>
+  mutate(Date = as.Date(Arrest.Date),
+         YearMonth = floor_date(Date, "month"))
+
+# Aggregate by YearMonth and Arrest.Category
+monthly_data <- data_subset |>
+  group_by(YearMonth, Arrest.Category) |>
+  summarize(
+    Monthly_Avg_Arrests = n(),
+    .groups = "drop"
+  )
+head(monthly_data)
+```
+
+
+```{r}
+# Identify the top 7 categories
+top_categories <- monthly_data %>%
+  group_by(Arrest.Category) %>%
+  summarize(Total_Arrests = mean(Monthly_Avg_Arrests)) %>%
+  arrange(desc(Total_Arrests)) %>%
+  slice(1:8) %>%
+  pull(Arrest.Category)
+
+# Combine other categories into "Other"
+monthly_data <- monthly_data %>%
+  mutate(Arrest.Category = ifelse(Arrest.Category %in% top_categories, Arrest.Category, "Other"))
+
+
+ggplot(monthly_data, aes(x = Arrest.Category, y = Monthly_Avg_Arrests, fill = Arrest.Category)) +
+  geom_boxplot() +
+  labs(
+    title = "Monthly Average Arrest Rates by Crime Category",
+    x = "Crime Category",
+    y = "Monthly Average Arrest Rate",
+    fill = "Crime Category"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+## Anova Test
+
+
+```{r}
+# Run ANOVA to test for differences in means
+anova_result <- aov(Monthly_Avg_Arrests ~ Arrest.Category, data = monthly_data)
+
+# Print summary of ANOVA
+summary(anova_result)
+```
+
+```{r}
+# Tukey's Honest Significant Difference test
+tukey_result <- TukeyHSD(anova_result)
+
+# Print Tukey results
+print(tukey_result)
+```
+
+
+```{r}
+# Extract Tukey HSD results into a data frame
+tukey_df <- as.data.frame(tukey_result$`Arrest.Category`)
+
+# Rename columns for clarity
+colnames(tukey_df) <- c("Mean Difference (Diff)", "Lower Bound (Lwr)", 
+                        "Upper Bound (Upr)", "Adjusted p-Value (p adj)")
+
+# Use kable to generate a clean table
+knitr::kable(tukey_df, caption = "Tukey's Honest Significant Difference Test Results")
+
+```
+
+
+
+
